@@ -1,6 +1,9 @@
+from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, RootModel, field_validator
+from pydantic import BaseModel, Field, RootModel, field_validator
+
+from .enums import FlowOption, ShadowsocksMethod, UserDataLimitResetStrategy
 
 
 class Token(BaseModel):
@@ -9,12 +12,20 @@ class Token(BaseModel):
 
 
 class Admin(BaseModel):
-    username: str
-    is_sudo: Optional[bool] = False
-    is_disabled: Optional[bool] = False
+    id: Optional[int] = None
+    username: Optional[str] = None
     telegram_id: Optional[int] = None
     discord_webhook: Optional[str] = None
-    users_usage: Optional[int] = None
+    sub_domain: Optional[str] = None
+    is_sudo: Optional[bool] = None
+    total_users: Optional[int] = None
+    used_traffic: Optional[int] = None
+    is_disabled: Optional[bool] = None
+    discord_id: Optional[int] = None
+    sub_template: Optional[str] = None
+    profile_title: Optional[str] = None
+    support_url: Optional[str] = None
+    lifetime_used_traffic: Optional[int] = None
 
 
 class AdminCreate(Admin):
@@ -34,16 +45,40 @@ class HTTPValidationError(BaseModel):
     detail: Optional[List[Dict[str, Any]]] = None
 
 
-class ProxySettings(BaseModel):
+# ------------------ VMess ------------------
+class VmessSettings(BaseModel):
     id: Optional[str] = None
-    flow: Optional[str] = None
-    method: Optional[str] = None
+
+
+# ------------------ VLESS ------------------
+class VlessSettings(BaseModel):
+    id: Optional[str] = None
+    flow: Optional[FlowOption] = None
+
+
+# ------------------ Trojan -----------------
+class TrojanSettings(BaseModel):
+    password: Optional[str] = Field(default=None, min_length=16)
+
+
+# ------------------ Shadowsocks ------------
+class ShadowsocksSettings(BaseModel):
+    password: Optional[str] = Field(default=None, min_length=16)
+    method: Optional[ShadowsocksMethod] = None
+
+
+class ProxySettings(BaseModel):
+    vmess: Optional[VmessSettings] = None
+    vless: Optional[VlessSettings] = None
+    trojan: Optional[TrojanSettings] = None
+    shadowsocks: Optional[ShadowsocksSettings] = None
 
 
 class NextPlanModel(BaseModel):
     add_remaining_traffic: bool = False
     data_limit: Optional[int] = 0
-    expire: Optional[int] = 0
+    user_template_id: Optional[int] = 0
+    expire: Optional[datetime] = None
     fire_on_either: bool = True
 
     @field_validator("data_limit", mode="before")
@@ -57,9 +92,9 @@ class UserCreate(BaseModel):
     username: str
     proxy_settings: Optional[Dict[str, ProxySettings]] = None
     group_ids: Optional[List[int]] = None
-    expire: Optional[int] = None
+    expire: Optional[datetime] = None
     data_limit: Optional[int] = 0
-    data_limit_reset_strategy: Optional[str] = "no_reset"
+    data_limit_reset_strategy: UserDataLimitResetStrategy | None = Field(default=None)
     note: Optional[str] = None
     sub_updated_at: Optional[str] = None
     sub_last_user_agent: Optional[str] = None
@@ -72,9 +107,9 @@ class UserCreate(BaseModel):
 
 class UserResponse(BaseModel):
     username: Optional[str] = None
-    proxy_settings: Optional[Dict[str, ProxySettings]] = {}
+    proxy_settings: Optional[ProxySettings] = None
     group_ids: Optional[List[int]] = None
-    expire: Optional[int] = None
+    expire: Optional[datetime] = None
     data_limit: Optional[int] = None
     data_limit_reset_strategy: Optional[str] = None
     note: Optional[str] = None
@@ -82,13 +117,15 @@ class UserResponse(BaseModel):
     sub_last_user_agent: Optional[str] = None
     online_at: Optional[str] = None
     on_hold_expire_duration: Optional[int] = None
+    id: Optional[int] = None
     on_hold_timeout: Optional[str] = None
+    group_ids: Optional[list] = None
     status: Literal["active", "disabled", "limited", "expired", "on_hold"] = "active"
     used_traffic: Optional[int] = None
     lifetime_used_traffic: Optional[int] = None
-    links: Optional[List[str]] = []
     subscription_url: Optional[str] = None
     subscription_token: Optional[str] = None
+    auto_delete_in_days: Optional[int] = None
     next_plan: Optional[NextPlanModel] = None
     admin: Optional[Admin] = None
     created_at: Optional[str] = None
@@ -107,10 +144,8 @@ class NodeCreate(BaseModel):
     connection_type: Optional[str] = None
     server_ca: Optional[str] = None
     keep_alive: Optional[int] = None
-    max_logs: Optional[int] = 1000
     core_config_id: Optional[int] = None
     api_key: Optional[str] = None
-    gather_logs: Optional[bool] = True
     api_port: Optional[int] = None
 
 
@@ -124,10 +159,8 @@ class NodeModify(BaseModel):
     connection_type: Optional[str] = None
     server_ca: Optional[str] = None
     keep_alive: Optional[int] = None
-    max_logs: Optional[int] = None
     core_config_id: Optional[int] = None
     api_key: Optional[str] = None
-    gather_logs: Optional[bool] = None
 
 
 class NodeResponse(BaseModel):
@@ -135,9 +168,12 @@ class NodeResponse(BaseModel):
     address: str
     port: int
     usage_coefficient: float
-    id: int
-    api_key: Optional[str] = None
+    connection_type: str
+    server_ca: str
+    keep_alive: int
     core_config_id: Optional[int] = None
+    api_key: Optional[str] = None
+    id: int
     xray_version: Optional[str] = None
     node_version: Optional[str] = None
     status: str
@@ -188,9 +224,9 @@ class CoreStats(BaseModel):
 
 
 class UserModify(BaseModel):
-    proxy_settings: Optional[Dict[str, ProxySettings]] = {}
+    proxy_settings: Optional[ProxySettings] = None
     group_ids: Optional[List[int]] = None
-    expire: Optional[int] = None
+    expire: Optional[datetime] = None
     data_limit: Optional[int] = None
     data_limit_reset_strategy: Optional[Literal["no_reset", "day", "week", "month", "year"]] = None
     note: Optional[str] = None
@@ -260,15 +296,23 @@ class ValidationError(BaseModel):
     type: str
 
 
+class UserSubscriptionUpdateSchema(BaseModel):
+    created_at: datetime | None = Field(default=None)
+    user_agent: str | None = Field(default=None)
+
+
+class UserSubscriptionUpdateList(BaseModel):
+    updates: list[UserSubscriptionUpdateSchema] = Field(default_factory=list)
+    count: int
+
+
 class SubscriptionUserResponse(BaseModel):
     proxies: Dict[str, Any]
-    expire: Optional[int] = None
+    expire: Optional[datetime] = None
     data_limit: Optional[int] = None
     data_limit_reset_strategy: str = "no_reset"
     inbounds: Dict[str, List[str]] = {}
     note: Optional[str] = None
-    sub_updated_at: Optional[str] = None
-    sub_last_user_agent: Optional[str] = None
     online_at: Optional[str] = None
     on_hold_expire_duration: Optional[int] = None
     on_hold_timeout: Optional[str] = None
@@ -278,7 +322,6 @@ class SubscriptionUserResponse(BaseModel):
     used_traffic: int
     lifetime_used_traffic: int = 0
     created_at: str
-    links: List[str] = []
     subscription_url: str = ""
     excluded_inbounds: Dict[str, List[str]] = {}
     admin: Optional[Admin] = None
@@ -291,11 +334,14 @@ class SystemStats(BaseModel):
     cpu_cores: Optional[int] = None
     cpu_usage: Optional[float] = None
     total_user: Optional[int] = None
-    users_active: Optional[int] = None
+    online_users: Optional[int] = None
+    active_users: Optional[int] = None
+    on_hold_users: Optional[int] = None
+    disabled_users: Optional[int] = None
+    expired_users: Optional[int] = None
+    limited_users: Optional[int] = None
     incoming_bandwidth: Optional[int] = None
     outgoing_bandwidth: Optional[int] = None
-    incoming_bandwidth_speed: Optional[int] = None
-    outgoing_bandwidth_speed: Optional[int] = None
 
 
 class Settings(BaseModel):
@@ -349,6 +395,7 @@ class CoreConfig(BaseModel):
     routing: Optional[Routing] = Routing()
 
 
+# Group
 class GroupBase(BaseModel):
     name: str
     inbound_tags: Optional[List[str]] = []
@@ -364,6 +411,9 @@ class GroupModify(GroupBase):
 
 
 class GroupResponse(GroupBase):
+    name: str
+    inbound_tags: list
+    is_disabled: bool
     id: int
     total_users: Optional[int] = 0
 
@@ -375,10 +425,12 @@ class GroupsResponse(BaseModel):
 
 class BulkGroup(BaseModel):
     group_ids: List[int]
+    has_group_ids: Optional[List[int]] = None
     admins: Optional[List[int]] = None
     users: Optional[List[int]] = None
 
 
+# Host
 class HostBase(BaseModel):
     remark: str
     address: str
@@ -392,6 +444,7 @@ class HostResponse(HostBase):
     id: Optional[int] = None
 
 
+# Core
 class CoreCreate(BaseModel):
     config: Dict[str, Any]
     name: Optional[str] = None
