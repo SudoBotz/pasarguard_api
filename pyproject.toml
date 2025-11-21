@@ -1,9 +1,9 @@
 [project]
 name = "pasarguard"
-version = "0.0.5"
+version = "0.0.6"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
     "datetime>=5.5",
     "httpx>=0.28.1",
