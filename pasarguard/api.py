@@ -599,10 +599,10 @@ class PasarguardAPI:
         response = await self._request("DELETE", url, token, params=params)
         return response.json()
 
-    async def get_nodes(self, token: str) -> List[NodeResponse]:
+    async def get_nodes(self, token: str) -> NodeResponse:
         url = "/api/nodes"
         response = await self._request("GET", url, token)
-        return [NodeResponse(**node) for node in response.json()]
+        return NodeResponse(**response.json())
 
     async def get_usage(self, token: str, start: Optional[str] = None, end: Optional[str] = None) -> NodesUsageResponse:
         url = "/api/nodes/usage"

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, RootModel, field_validator
+from pydantic import BaseModel, Field, RootModel, field_validator, ConfigDict
 
 from .enums import FlowOption, ShadowsocksMethod, UserDataLimitResetStrategy
 
@@ -163,7 +163,9 @@ class NodeModify(BaseModel):
     api_key: Optional[str] = None
 
 
-class NodeResponse(BaseModel):
+class Nodes(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
     name: str
     address: str
     port: int
@@ -178,7 +180,13 @@ class NodeResponse(BaseModel):
     node_version: Optional[str] = None
     status: str
     message: Optional[str] = None
+    uplink: Optional[int] = None
+    downlink: Optional[int] = None
 
+
+class NodeResponse(BaseModel):
+    nodes: list[Nodes]
+    total: int
 
 class NodeUsageResponse(BaseModel):
     node_id: Optional[int] = None
