@@ -426,8 +426,9 @@ class PasarguardAPI:
         return UserUsagesResponse(**response.json())
 
     async def set_owner(self, username: str, admin_username: str, token: str) -> UserResponse:
-        url = f"/api/user/{username}/set-owner?admin_username={admin_username}"
-        response = await self._request("PUT", url, token)
+        url = f"/api/user/{username}/set_owner"
+        params = {"admin_username": admin_username}
+        response = await self._request("PUT", url, token, params=params)
         return UserResponse(**response.json())
 
     async def get_expired_users(
