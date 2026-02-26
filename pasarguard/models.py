@@ -101,7 +101,7 @@ class NextPlanModel(BaseModel):
 
 class UserCreate(BaseModel):
     username: str
-    proxy_settings: Optional[Dict[str, ProxySettings]] = None
+    proxy_settings: Optional[ProxySettings] = None
     group_ids: Optional[List[int]] = None
     expire: Optional[datetime] = None
     data_limit: Optional[int] = 0
