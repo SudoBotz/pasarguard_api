@@ -2,11 +2,15 @@ from __future__ import annotations
 
 # ruff: noqa: F401, F403
 from ._base import *
+from ..enums.admin import AdminAccountStatus, AdminStatus
+from .admin_role import AdminRoleData, RoleLimits
 
 class AdminBase(PasarguardModel):
+    id: Optional[int] = None
     username: str = ...
 
 class AdminContactInfo(PasarguardModel):
+    id: Optional[int] = None
     username: str = ...
     telegram_id: Optional[int] = None
     discord_webhook: Optional[str] = None
@@ -17,21 +21,25 @@ class AdminContactInfo(PasarguardModel):
 
 class AdminCreate(PasarguardModel):
     password: str = ...
-    is_sudo: bool = ...
+    role_id: int = ...
+    username: str = ...
     telegram_id: Optional[int] = None
     discord_webhook: Optional[str] = None
     discord_id: Optional[int] = None
-    is_disabled: Optional[bool] = None
+    status: Optional[AdminAccountStatus] = None
+    data_limit: Optional[int] = None
     sub_template: Optional[str] = None
     sub_domain: Optional[str] = None
     profile_title: Optional[str] = None
     support_url: Optional[str] = None
     note: Optional[str] = None
     notification_enable: Optional[UserNotificationEnable] = None
-    username: str = ...
+    permission_overrides: Optional[RoleLimits] = None
 
 class AdminDetails(PasarguardModel):
     username: str = ...
+    is_disabled: bool = ...
+    is_limited: bool = ...
     telegram_id: Optional[int] = None
     discord_webhook: Optional[str] = None
     sub_domain: Optional[str] = None
@@ -39,28 +47,32 @@ class AdminDetails(PasarguardModel):
     support_url: Optional[str] = None
     notification_enable: Optional[UserNotificationEnable] = None
     id: Optional[int] = None
-    is_sudo: bool = ...
     total_users: Optional[int] = 0
     used_traffic: Optional[int] = 0
-    is_disabled: Optional[bool] = False
+    data_limit: Optional[int] = None
+    status: Optional[AdminStatus] = AdminStatus.ACTIVE
     discord_id: Optional[int] = None
     sub_template: Optional[str] = None
     lifetime_used_traffic: Optional[int] = None
     note: Optional[str] = None
+    role: Optional[AdminRoleData] = None
+    permission_overrides: Optional[RoleLimits] = None
 
 class AdminModify(PasarguardModel):
     password: Optional[str] = None
-    is_sudo: bool = ...
     telegram_id: Optional[int] = None
     discord_webhook: Optional[str] = None
     discord_id: Optional[int] = None
-    is_disabled: Optional[bool] = None
+    status: Optional[AdminAccountStatus] = None
+    data_limit: Optional[int] = None
     sub_template: Optional[str] = None
     sub_domain: Optional[str] = None
     profile_title: Optional[str] = None
     support_url: Optional[str] = None
     note: Optional[str] = None
     notification_enable: Optional[UserNotificationEnable] = None
+    role_id: Optional[int] = None
+    permission_overrides: Optional[RoleLimits] = None
 
 class AdminNotificationEnable(PasarguardModel):
     create: Optional[bool] = True
@@ -68,6 +80,8 @@ class AdminNotificationEnable(PasarguardModel):
     delete: Optional[bool] = True
     reset_usage: Optional[bool] = True
     login: Optional[bool] = True
+    usage_limit_warning: Optional[bool] = True
+    usage_limit_warning_percentages: Optional[List[int]] = None
 
 class AdminSimple(PasarguardModel):
     id: int = ...
@@ -78,6 +92,7 @@ class AdminsResponse(PasarguardModel):
     total: int = ...
     active: int = ...
     disabled: int = ...
+    limited: int = ...
 
 class AdminsSimpleResponse(PasarguardModel):
     admins: List[AdminSimple] = ...
@@ -92,7 +107,7 @@ class BodyAdminTokenApiAdminTokenPost(PasarguardModel):
     client_secret: Optional[str] = None
 
 class BulkAdminSelection(PasarguardModel):
-    usernames: Optional[List[str]] = None
+    ids: Optional[List[int]] = None
 
 class BulkAdminsActionResponse(PasarguardModel):
     admins: List[str] = ...

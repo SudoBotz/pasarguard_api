@@ -25,6 +25,7 @@ class NotificationChannel(PasarguardModel):
 
 class NotificationChannels(PasarguardModel):
     admin: Optional[NotificationChannel] = None
+    admin_role: Optional[NotificationChannel] = None
     core: Optional[NotificationChannel] = None
     group: Optional[NotificationChannel] = None
     host: Optional[NotificationChannel] = None
@@ -34,6 +35,7 @@ class NotificationChannels(PasarguardModel):
 
 class NotificationEnable(PasarguardModel):
     admin: Optional[AdminNotificationEnable] = None
+    admin_role: Optional[BaseNotificationEnable] = None
     core: Optional[BaseNotificationEnable] = None
     group: Optional[BaseNotificationEnable] = None
     host: Optional[HostNotificationEnable] = None
